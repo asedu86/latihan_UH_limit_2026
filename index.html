@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latihan UH Limit Matematika</title>
+  <!-- Tailwind CSS untuk Tampilan Modern -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- KONFIGURASI MathJax (harus dipasang SEBELUM script MathJax dimuat).
+       Tanpa konfigurasi ini, tanda $...$ tidak dikenali sehingga rumus tampil sebagai teks mentah. -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+
+  <style>
+    /* Beri ruang agar pecahan dan limit tidak terpotong */
+    mjx-container { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+    .soal-teks mjx-container { margin: 0.25rem 0 !important; }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col justify-center items-center p-4">
+
+  <!-- CARD UTAMA -->
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl p-6 md:p-8">
+
+    <!-- HALAMAN 1: FORM DATA DIRI -->
+    <div id="page-identitas">
+      <h2 class="text-2xl font-bold text-center text-blue-600 mb-6">Formulir Data Siswa</h2>
+      <form id="formIdentitas" onsubmit="mulaiUjian(event)" class="space-y-4">
+
+        <!-- Pilih Kelas -->
+        <div>
+          <label class="block font-semibold mb-1">Kelas:</label>
+          <select id="kelas" required onchange="updateNamaSiswa()" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+            <option value="">-- Pilih Kelas --</option>
+            <option value="11 D">11 D</option>
+            <option value="11 E">11 E</option>
+            <option value="11 F">11 F</option>
+            <option value="11 G">11 G</option>
+            <option value="11 H">11 H</option>
+          </select>
+        </div>
+
+        <!-- Pilih Nama (Dinamis sesuai kelas) -->
+        <div>
+          <label class="block font-semibold mb-1">Nama Siswa:</label>
+          <select id="nama" required disabled class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
+            <option value="">-- Pilih Kelas Terlebih Dahulu --</option>
+          </select>
+        </div>
+
+        <!-- Input NISN -->
+        <div>
+          <label class="block font-semibold mb-1">NISN (10 Digit Angka):</label>
+          <input type="text" id="nisn" maxlength="10" inputmode="numeric" placeholder="Contoh: 0012345678" required class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+          <p id="error-nisn" class="text-red-500 text-sm hidden mt-1">NISN harus berupa 10 digit angka!</p>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200 mt-6">
+          Mulai Mengerjakan Soal
+        </button>
+      </form>
+    </div>
+
+    <!-- HALAMAN 2: LEMBAR SOAL UJIAN -->
+    <div id="page-soal" class="hidden">
+      <div class="border-b pb-4 mb-6 flex justify-between items-center">
+        <div>
+          <h3 id="infoSiswa" class="font-bold text-lg text-gray-800"></h3>
+          <p class="text-sm text-gray-500">Pelajaran: Latihan UH Limit Matematika</p>
+        </div>
+        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">12 Soal</span>
+      </div>
+
+      <form id="formSoal" onsubmit="submitUjian(event)" class="space-y-6">
+        <div id="containerSoal" class="space-y-6"></div>
+
+        <button type="submit" id="btnSubmit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition duration-200">
+          Kirim Jawaban
+        </button>
+      </form>
+    </div>
+
+    <!-- HALAMAN 3: HASIL & SKOR -->
+    <div id="page-hasil" class="hidden text-center py-6 space-y-6">
+      <h2 class="text-3xl font-bold text-gray-800">Hasil Ujian</h2>
+      <p id="pesanHasil" class="text-gray-600">Terima kasih telah menyelesaikan ujian ini. Data Anda telah terkirim.</p>
+
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 max-w-sm mx-auto">
+        <span class="block text-gray-500 font-semibold mb-2">NILAI AKHIR</span>
+        <span id="skorAkhir" class="text-6xl font-extrabold text-blue-600">0</span>
+        <span class="block text-sm text-gray-400 mt-2">*****</span>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+        <button onclick="ulangUjian()" class="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white font-semibold px-6 py-2.5 rounded-lg transition">
+          Ulang Kembali
+        </button>
+        <button onclick="selesaiUjian()" class="w-full sm:w-auto bg-gray-600 hover:bg-gray-700 text-white font-semibold px-6 py-2.5 rounded-lg transition">
+          Selesai
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Data Siswa Berdasarkan Kelas
+    const dataSiswa = {
+      "11 D": ["Ade Nova Aulia ", "Adrian Arfani Putra", "Agustin Suci Ramadhani ", "Ahmad Fauzan Bahri", "Aisyah Zaskia Meta", "Alvira Febriyanti", "Alya Aqila", "Andine Ika Asti Pratiwi", "Aulia Nur Syafa", "Aurelia Dolok Saribu", "Azka Atthaya Hermawan", "Berliani Nurul Intan", "Caesareista Natallis Venae Cepha", "Dika Soni Pratama", "Dinda Ayu Novi Yeni", "Divahara Muliyanah", "Doris Tambunan", "Dwi Candra Kirana", "Hannamatul Jihan", "Iggy Havilah Prawira", "Intan Sukma Aulia", "Jingga Fitri Willyanti ", "Khalisa Fikhratuha ", "Khansa Fadiyah Hasanah", "M. Wildan Rabbani", "Meysa Puspita Harahap", "Miftah Alyaa Az Zahra", "Muhamad Aji Pahreza", "Muhamad Zaki", "Muhammad Akbar Syafii", "Muhammad Devan Radhitya", "Mutmainah", "Navin Bimanyu", "Nur Padliatin Hayatul Husna", "Raffa Adi Nugroho", "Raffael Yudhistira", "Reza Ardityan", "Rika Lestari", "Satria Khomarul Zaman", "Sazkia Ramadhani", "Shinta Khairunnisa", "Silma Rodhiah Puspitasari", "Siska Pratiwi", "Siti Khodijah", "Ummy Hanny Farhana", "Vinu Kalam Wistara"],
+      "11 E": ["Alfin Aqilla Perdana ", "Alifia Mano Meinar", "Althafunnisa Zen", "Aluna Zahraeka", "Anaya Syafa Aurelianti", "Anisa", "Arlitha Tri Hapsari", "Audy Aulia Putri Sahara", "Bella Sarina", "Bunga Malati Zaskia", "Cinta Dayu Nurvidtin", "Citra Sandria Sari", "Clarrens Felicia Yustanti", "Claudia Padilah Putri", "Danish Rafee Aly", "Dina Rafilah", "Faiha Rabithah Qalby", "Hamid Alparizi", "Ibrahimovic Al Ghaffar Widodo", "Immanuel Raja Sitinjak", "Jasmine Azzahra", "Jesica Melisa Helaha", "Khalisha Fikratuha", "Khoirul Azam", "Laksamana Keanu Agha", "Liandhara Fauziah", "Lulu Ramadani", "Marsellino", "Maymunah Saroh", "Mohammad Baharudin Kohar", "Muhamad Ilham", "Muhamad Rizky Maulana", "Muhammad Naufan", "Nadila Zalfa Hardiyanti", "Nino Athaya Wahyu Rahmani", "Novita Sari", "Raiz Muntazar", "Rehasi Jewies Hayeng", "Rizqi Vriandini Waesul Qurni", "Salsabila", "Saraya Ramadani", "Shinta Aulia Choirunnisa", "Syahla Alifya Ramadhani", "Talitha Khairiyah", "Valeska Eliora Anabell Gulo", "Dede Abdul Rahman"],
+      "11 F": ["Abiy Pratama Hendrianto ", "Ainun Nazwa", "Aldrina Aulida Safira", "Aliyah Latifa Hasanah", "Ananda Tri Syihabudin", "Andini Aulia Permana", "Andreas Juniardi Manik", "Annisa Kurniawati", "Bima Alkausar Nasution", "Bunga Mawar Zaskia", "Citra Aulia", "Citra Budi Santosa", "Clarissa Fortuna Perisa Putri", "Darniah", "Dennis Raditya Ramadhan", "Dera Aulia Syifa", "Eka Rosmawati S.", "Farany Qurrotu'Ainii", "Habiburrahman", "Ichiko Abqory Saptaji", "Imelda Citra Auliya", "Khoirunnisa Hanifah Fathiyah", "Lea Aisyah Rani", "Lintang Yumna Z", "M. Fatthur Rizik", "Maya Sarip", "Muhamad Kafi Kamaludin", "Muhammad Fazril Ilham", "Muhammad Rafka Ilhami Anwa", "Muhammad Revanza", "Muhammad Rijal Maulana", "Mutiara Destyanugrah", "Nadya Mulya", "Noris Tarihoran", "Rahsya Arzenda", "Raras Dwiarti", "Rioga Kamazawa", "Rizky Asfa Abdani", "Rofidah Sarif", "Salsabila Putri Arta", "Sheina Kayla Putri", "Siti Rohmah Zhafira", "Wardahtun Azkia", "Zhafirah Ulayya"],
+      "11 G": ["Abdiel Belva Fidelya ", "Agnisa Nadya Putri", "Ahmad At Tariq", "Ahmad Maulana", "Ainun Hakey", "Al Mira Putri Rahayu", "Altair Valiant Shashenka Wiyanto ", "Alvian Malvianto Pratama", "Asyifah Salsabila", "Chiko Alfachry Zudhan", "Cresiah Tilita Syaki", "Dea Putriani", "Dhiya Arsya Aulia", "Dini Ayu Amirah", "Dwi Asmawati", "Eggis Regina Shifa", "Fadlan Al Ghozali", "Febrian Juardi", "Firly Roby Anwar", "Haiza Melati Amira", "Ibnu Haidar", "Ibnu Rafiih", "Jhassen Al Zacky Effendi", "Kaila Fresqisyah", "Keysha Adelia Putri", "Muhamad Rozein Apriansyah", "Muhammad Ardiansyah", "Muhammad Danu Mulya Perwira", "Muhammad Dzaki", "Muhammad Zaenal Arifin", "Novelia Nur Anin Gita", "Nuraini", "Parhatunnisa", "Rafa Pratama Nur Ardiansyah", "Ranita Hana Valerin", "Rasih Yuningsih", "Rayyi Muhammad Giras", "Reihana Aurelia Sandi", "Sairil Kamila", "Shafa Deshabilla", "Siti Milatul Kamila", "Syifa Sahla Ariyani", "Widia Wati Siburian", "Yolanda Anindita Putri", "Zahirah Zahwa Hafizah"],
+      "11 H": ["Aditya Aji Mukti Wicaksono ", "Ahmad Habibi", "Akbar Ramadhan", "Aldo Rizki Agasta", "Alika Kholifatul Musfiroh", "Alviani Dewanti", "Amira Kaltsum", "Angelia Aviza Mizan", "Anggi Jelita Pangaribuan", "Anita Maha Rija", "Aulia Aryanih", "Clearesta Qabil Raissa Belizia", "Densi Raissa Salsabila", "Deswita Maharani Nababan", "Dinda Pebrina", "Dionisius Adven", "Dzahratu Sita", "Fadly Pratama Putra", "Farras Elvaretha Azhura", "Filza Zakiyah", "Jerrio Hanindio Dio S.", "Kania Nayla Putri", "Keyla Ramadhani Iskandar", "M. Rehan Alfarizi", "Mahmud Arief Arkaan", "Marwan Hadi", "Masripah", "Mohammad Nur Rasyidan", "Muhamad Shofi Mubarok", "Muhammad Luthfi Azmi", "Muhammad Rafa Nur Fadillah", "Muhammad Zaki Dautawafidiharja", "Mutiara Septiany", "Nikita", "Rafif Wisnutama Rafi Bayu", "Raihana Nursyifa Rahman", "Richo Heizkhia Tambunan", "Sayyidah Mutmainah", "Shafa Rahma Chania", "Siti Umairah Marsyah Noor", "Syafira Zahira", "Tegar Langit Rohmahdhan", "Wilda Tri Ananda", "Silfa Oktarina", "Anisa Zahra Febriana"]
+    };
+
+    // =====================================================================
+    // BANK SOAL — diambil dari file LATIHAN_UH_LIMIT.docx (12 soal)
+    // Rumus ditulis dengan LaTeX di antara tanda $...$ dan dirender MathJax.
+    // "kunci" = indeks opsi yang benar (0=A, 1=B, 2=C, 3=D, 4=E).
+    // Catatan: karena ditulis di dalam string JavaScript, setiap backslash
+    // harus ditulis dobel (\\lim, \\frac, \\sqrt, dst).
+    // =====================================================================
+    const bankSoal = [
+      { // 1
+        teks: "Nilai dari $\\displaystyle \\lim_{x \\to 2} \\frac{x - 2}{x^2 + 4}$ adalah ....",
+        opsi: ["$0$", "$\\infty$", "$1$", "$2$", "$4$"],
+        kunci: 0 // A
+      },
+      { // 2
+        teks: "Hasil dari $\\displaystyle \\lim_{x \\to 4} \\frac{x^2 + 2x - 24}{x - 4}$ adalah ....",
+        opsi: ["$-10$", "$-2$", "$0$", "$2$", "$10$"],
+        kunci: 4 // E
+      },
+      { // 3
+        teks: "Nilai dari $\\displaystyle \\lim_{x \\to 0} \\frac{4x^2 - 8x}{x^3 - 2x^2}$ adalah ....",
+        opsi: ["$-2$", "$\\infty$", "$0$", "$2$", "$4$"],
+        kunci: 1 // B
+      },
+      { // 4
+        teks: "Hasil dari $\\displaystyle \\lim_{x \\to 9} \\frac{x - 9}{3 - \\sqrt{x}}$ adalah ....",
+        opsi: ["$6$", "$3$", "$\\infty$", "$-3$", "$-6$"],
+        kunci: 4 // E
+      },
+      { // 5
+        teks: "Nilai dari $\\displaystyle \\lim_{x \\to 2} \\frac{x^2 + 4x - 12}{\\sqrt{x + 7} - 3}$ adalah ....",
+        opsi: ["$24$", "$33$", "$48$", "$55$", "$62$"],
+        kunci: 2 // C
+      },
+      { // 6
+        teks: "Nilai dari $\\displaystyle \\lim_{x \\to 0} \\frac{3x}{\\sin 5x}$ adalah ....",
+        opsi: [
+          "$\\dfrac{3x}{5x}$",
+          "$\\dfrac{5x}{3x}$",
+          "$\\dfrac{5x}{5x}$",
+          "$\\dfrac{5}{3}$",
+          "$\\dfrac{3}{5}$"
+        ],
+        kunci: 4 // E
+      },
+      { // 7
+        teks: "Hasil dari $\\displaystyle \\lim_{x \\to 0} \\frac{\\sin^2 6x}{2x \\tan 8x}$ adalah ....",
+        opsi: [
+          "$\\dfrac{16}{36}$",
+          "$\\dfrac{4}{36}$",
+          "$\\dfrac{36}{10}$",
+          "$\\dfrac{36}{4}$",
+          "$\\dfrac{36}{16}$"
+        ],
+        kunci: 4 // E
+      },
+      { // 8
+        teks: "Nilai dari $\\displaystyle \\lim_{x \\to 3} \\frac{x^2 - 7x + 12}{\\sin (x - 3)}$ adalah ....",
+        opsi: ["$-3$", "$-1$", "$\\infty$", "$3$", "$1$"],
+        kunci: 1 // B
+      },
+      { // 9
+        teks: "Hasil dari $\\displaystyle \\lim_{x \\to \\infty} \\frac{6 - 7x + x^2 - 4x^3}{2x^2 + x - 7}$ adalah ....",
+        opsi: ["$1$", "$0$", "$\\infty$", "$-1$", "$-2$"],
+        kunci: 2 // C (sesuai kunci di file Word)
+      },
+      { // 10
+        teks: "Hasil dari $\\displaystyle \\lim_{x \\to \\infty} \\frac{(6x - 9)(2x^2 - 7)}{1 - 8x + 9x^2 - 4x^3}$ adalah ....",
+        opsi: ["$1$", "$0$", "$\\infty$", "$-1$", "$-3$"],
+        kunci: 4 // E
+      },
+      { // 11
+        teks: "Nilai dari $\\displaystyle \\lim_{x \\to \\infty} \\left( \\sqrt{3x^2 - 4x - 5} - \\sqrt{x^2 - 6x + 7} \\right)$ adalah ....",
+        opsi: ["$0$", "$1$", "$3$", "$6$", "$\\infty$"],
+        kunci: 4 // E
+      },
+      { // 12
+        teks: "Hasil dari $\\displaystyle \\lim_{x \\to \\infty} \\left( \\sqrt{9x^2 + 6x} - (3x - 4) \\right)$ adalah ....",
+        opsi: ["$3$", "$4$", "$5$", "$6$", "$7$"],
+        kunci: 2 // C
+      }
+    ];
+
+    let identitas = {};
+
+    function updateNamaSiswa() {
+      const kelas = document.getElementById('kelas').value;
+      const selectNama = document.getElementById('nama');
+      selectNama.innerHTML = '<option value="">-- Pilih Nama --</option>';
+
+      if (kelas && dataSiswa[kelas]) {
+        selectNama.disabled = false;
+        selectNama.classList.remove('bg-gray-50');
+        dataSiswa[kelas].forEach(nama => {
+          const opt = document.createElement('option');
+          opt.value = nama;
+          opt.textContent = nama;
+          selectNama.appendChild(opt);
+        });
+      } else {
+        selectNama.disabled = true;
+        selectNama.classList.add('bg-gray-50');
+      }
+    }
+
+    function mulaiUjian(e) {
+      e.preventDefault();
+      const nisnInput = document.getElementById('nisn').value;
+      const errNisn = document.getElementById('error-nisn');
+
+      if (!/^\d{10}$/.test(nisnInput)) {
+        errNisn.classList.remove('hidden');
+        return;
+      }
+      errNisn.classList.add('hidden');
+
+      identitas = {
+        kelas: document.getElementById('kelas').value,
+        nama: document.getElementById('nama').value,
+        nisn: nisnInput
+      };
+
+      document.getElementById('infoSiswa').innerText = `${identitas.nama} (${identitas.kelas}) - NISN: ${identitas.nisn}`;
+
+      // Tampilkan halaman soal dulu, baru render soal + rumus
+      document.getElementById('page-identitas').classList.add('hidden');
+      document.getElementById('page-soal').classList.remove('hidden');
+      renderSoal();
+    }
+
+    // Render rumus dengan aman: tunggu MathJax siap jika belum selesai dimuat
+    function renderMath(el) {
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetClear && MathJax.typesetClear([el]);
+        MathJax.typesetPromise([el]).catch(err => console.error('MathJax error:', err));
+      } else {
+        setTimeout(() => renderMath(el), 200);
+      }
+    }
+
+    function renderSoal() {
+      const container = document.getElementById('containerSoal');
+      const hurufOpsi = ['A', 'B', 'C', 'D', 'E'];
+
+      // Bangun seluruh HTML sekali, lalu pasang ke DOM
+      const html = bankSoal.map((soal, index) => {
+        const htmlOptions = soal.opsi.map((opsi, i) => `
+          <label class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 border border-gray-100 cursor-pointer">
+            <input type="radio" name="soal_${index}" value="${i}" required class="w-4 h-4 text-blue-600 shrink-0">
+            <span class="text-gray-700">${hurufOpsi[i]}.&nbsp;${opsi}</span>
+          </label>
+        `).join('');
+
+        return `
+          <div class="bg-gray-50 border p-4 rounded-lg space-y-3">
+            <div class="soal-teks font-medium text-gray-800">${index + 1}. ${soal.teks}</div>
+            <div class="space-y-1">${htmlOptions}</div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
+      renderMath(container);
+    }
+
+    function tampilkanHasil(nilai, tersimpan) {
+      document.getElementById('skorAkhir').innerText = nilai;
+      document.getElementById('pesanHasil').innerText = tersimpan
+        ? 'Terima kasih telah menyelesaikan ujian ini. Data Anda telah tersimpan ke Google Sheets.'
+        : 'Terima kasih telah menyelesaikan ujian ini. (Mode pratinjau: data tidak dikirim ke Google Sheets.)';
+      document.getElementById('page-soal').classList.add('hidden');
+      document.getElementById('page-hasil').classList.remove('hidden');
+    }
+
+    function submitUjian(e) {
+      e.preventDefault();
+      const btnSubmit = document.getElementById('btnSubmit');
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = "Menyimpan Data...";
+
+      let benar = 0;
+      bankSoal.forEach((soal, index) => {
+        const selected = document.querySelector(`input[name="soal_${index}"]:checked`);
+        if (selected && parseInt(selected.value) === soal.kunci) {
+          benar++;
+        }
+      });
+
+      const nilai = Math.round((benar / bankSoal.length) * 100);
+
+      const payload = {
+        ...identitas,
+        nilai: nilai,
+        jumlahBenar: benar
+      };
+
+      // google.script.run hanya ada saat dijalankan sebagai Web App Google Apps Script.
+      // Jika file dibuka langsung di browser (pratinjau), tetap tampilkan nilai.
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function () {
+            tampilkanHasil(nilai, true);
+          })
+          .withFailureHandler(function (err) {
+            alert("Gagal menyimpan data: " + err);
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "Kirim Jawaban";
+          })
+          .simpanHasil(payload);
+      } else {
+        tampilkanHasil(nilai, false);
+      }
+    }
+
+    function ulangUjian() {
+      document.getElementById('formIdentitas').reset();
+      updateNamaSiswa();
+      const btnSubmit = document.getElementById('btnSubmit');
+      btnSubmit.disabled = false;
+      btnSubmit.innerText = "Kirim Jawaban";
+      document.getElementById('page-hasil').classList.add('hidden');
+      document.getElementById('page-identitas').classList.remove('hidden');
+    }
+
+    function selesaiUjian() {
+      document.body.innerHTML = `
+        <div class="text-center p-8 bg-white rounded-xl shadow-lg">
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Terima Kasih!</h2>
+          <p class="text-gray-600">Anda telah berhasil keluar dari aplikasi.</p>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
